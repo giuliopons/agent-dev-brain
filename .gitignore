@@ -1,0 +1,6 @@
+.env
+state/
+brain/
+__pycache__/
+# note di lavoro personali (stato della macchina, cose da fare): non vanno pubblicate
+HANDOFF.md

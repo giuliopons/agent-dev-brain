@@ -1,0 +1,19 @@
+services:
+  agent-dev:
+    build: .
+    image: agent-dev:latest
+    container_name: agent-dev
+    env_file: .env
+    user: "1000:1000"
+    # rete dell'host: 127.0.0.1:22 è l'sshd del mini PC (from= in authorized_keys di brain)
+    network_mode: host
+    restart: unless-stopped
+    mem_limit: 1g
+    volumes:
+      - ./brain:/work/brain
+      - ./state:/state
+      - ./state/claude:/home/agent/.claude
+      - ./state/ssh:/home/agent/.ssh:ro
+      - ./bot.py:/app/bot.py:ro
+      # fusi orari dell'host: la cattura nomina le note nell'ora locale (TZ in .env)
+      - /usr/share/zoneinfo:/usr/share/zoneinfo:ro
