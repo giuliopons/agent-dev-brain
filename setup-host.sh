@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-time host setup for agent-dev (needs sudo). Idempotent.
-#   sudo bash setup-host.sh   (from the agent-dev folder)
+#   sudo bash setup-host.sh   (from the agent-dev-brain folder)
 # 1. installs Docker Engine + Compose plugin from the official Docker apt repo
 # 2. authorizes agent-dev's SSH key on the brain bare repo: restrict + localhost only
 set -euo pipefail

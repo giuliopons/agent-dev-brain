@@ -1,11 +1,11 @@
 # nome fisso del progetto compose: altrimenti dipende dal nome della cartella
-name: agent-dev
+name: agent-dev-brain
 
 services:
-  agent-dev:
+  agent-dev-brain:
     build: .
-    image: agent-dev:latest
-    container_name: agent-dev
+    image: agent-dev-brain:latest
+    container_name: agent-dev-brain
     env_file: .env
     user: "1000:1000"
     # rete dell'host: 127.0.0.1:22 è l'sshd del mini PC (from= in authorized_keys di brain)

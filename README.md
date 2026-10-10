@@ -22,7 +22,7 @@ Il bot è pensato per **una sola persona**: risponde a un solo user id Telegram,
 Dalla cartella del repo, sul server:
 
 ```bash
-git clone https://github.com/giuliopons/agent-dev-brain.git agent-dev && cd agent-dev
+git clone https://github.com/giuliopons/agent-dev-brain.git && cd agent-dev-brain
 
 # 1. repo centrale + mirror. Alla fine stampa una deploy key da aggiungere su GitHub
 #    (repo del vault → Settings → Deploy keys, con "Allow write access"), poi verifica:
@@ -39,7 +39,7 @@ mkdir -p state/claude && install -d -m 700 state/ssh
 ssh-keygen -q -t ed25519 -N "" -C "agent-dev@$(hostname)" -f state/ssh/id_ed25519
 ssh-keyscan -t ed25519 127.0.0.1 > state/ssh/known_hosts
 cat > state/ssh/config <<'CFG'
-# ssh del container agent-dev (montato read-only in /home/agent/.ssh)
+# ssh del container agent-dev-brain (montato read-only in /home/agent/.ssh)
 Host 127.0.0.1
   User brain
   IdentityFile ~/.ssh/id_ed25519
@@ -64,7 +64,7 @@ git -C brain config core.sshCommand "ssh -i /home/agent/.ssh/id_ed25519 -o UserK
 # 6. segreti e avvio
 cp .env.example .env && chmod 600 .env   # compila TELEGRAM_TOKEN e ALLOWED_USER_ID
 sudo docker compose build
-sudo docker compose run --rm agent-dev claude setup-token   # il valore va in .env
+sudo docker compose run --rm agent-dev-brain claude setup-token   # il valore va in .env
 sudo docker compose up -d
 ```
 
@@ -88,7 +88,7 @@ sudo docker compose ps                  # sta girando?
 sudo docker compose logs -f             # log del bot (Ctrl+C per uscire)
 sudo docker compose restart             # dopo aver modificato bot.py
 sudo docker compose up -d               # avvio (riparte da solo anche dopo un reboot)
-sudo docker compose exec agent-dev bash # shell nel container
+sudo docker compose exec agent-dev-brain bash # shell nel container
 sudo tail -3 /home/brain/mirror.log     # esito delle copie su GitHub
 ```
 
@@ -141,7 +141,7 @@ python3 -m venv /tmp/ptb && /tmp/ptb/bin/pip install -q python-telegram-bot==22.
 ## Se qualcosa va storto
 
 - **Il bot non risponde** → `sudo docker compose ps` e `logs`. Token revocato? `.env` salvato?
-- **"Claude è uscito con errore"** → token scaduto (dura circa un anno): `sudo docker compose run --rm agent-dev claude setup-token`, nuovo valore in `.env`, `sudo docker compose up -d`. Se l'errore parla di sessione: `/new`.
+- **"Claude è uscito con errore"** → token scaduto (dura circa un anno): `sudo docker compose run --rm agent-dev-brain claude setup-token`, nuovo valore in `.env`, `sudo docker compose up -d`. Se l'errore parla di sessione: `/new`.
 - **Task fallito o commit rifiutato da gitleaks** → le modifiche sono in `git stash` del clone: `git -C brain stash list`, `stash show -p`, poi `stash drop` (o `pop` per recuperarle).
 - **pull --rebase fallito** → conflitto con un commit fatto altrove. Il bot si ferma senza toccare niente: risolvi a mano in `brain/`. Per usare git dall'host: `GIT_SSH_COMMAND="ssh -i state/ssh/id_ed25519 -o UserKnownHostsFile=state/ssh/known_hosts -o IdentitiesOnly=yes"`.
 - **Cattura "❌ Non salvato"** → l'errore è nel messaggio. Se il commit è stato rifiutato da gitleaks, la nota è in `git -C state/capture stash list`. Un push fallito resta committato nel clone di cattura e riparte con la cattura successiva.
