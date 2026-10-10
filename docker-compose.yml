@@ -1,3 +1,6 @@
+# nome fisso del progetto compose: altrimenti dipende dal nome della cartella
+name: agent-dev
+
 services:
   agent-dev:
     build: .

@@ -1,4 +1,4 @@
-# agent-dev
+# agent-dev-brain
 
 Il progetto di tutto il server del brain: il repo centrale `brain.git` con il mirror su GitHub (`setup-server.sh`) e il bot Telegram che pilota Claude Code headless in Docker sul vault (`setup-host.sh`, `bot.py`). Uso e struttura: `README.md`. Stato e decisioni recenti: `HANDOFF.md`.
 
@@ -8,7 +8,7 @@ Questo file è per chi sviluppa il bot. Il Claude del bot non lo vede: il contai
 - **I commit li fa l'utente.** Lascia le modifiche non committate e proponi il messaggio.
 - **Non scrivere mai in `brain/`.** È il clone del bot, e un albero sporco finisce nel commit del task successivo. Le modifiche al vault si fanno su una copia nella scratchpad. Git dall'host: `GIT_SSH_COMMAND` con la chiave in `state/ssh/`, perché `core.sshCommand` del clone punta ai path del container.
 - **Docker solo con `sudo docker compose …`, lanciato dall'utente.** L'utente non è nel gruppo docker, per scelta: il gruppo docker equivale a root. Niente regole sudoers NOPASSWD.
-- **Niente modifiche fuori da `~/agent-dev` senza chiedere**, comprese quelle che sembrano innocue, come un `chmod`.
+- **Niente modifiche fuori da `~/agent-dev-brain` senza chiedere**, comprese quelle che sembrano innocue, come un `chmod`.
 - Proposta già rifiutata, da non riproporre: in `bot.py`, controllare che l'albero sia pulito prima del task.
 
 ## Sicurezza (bot.py)
