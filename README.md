@@ -1,21 +1,32 @@
 # agent-dev-brain
 
-Un server casalingo per un "secondo cervello" in Markdown, cioè un vault Obsidian versionato con git. Fa due cose:
+Un server casalingo per un "secondo cervello" in Markdown, cioè un vault Obsidian versionato con git. Questo sistema fa due cose:
 
-1. **Repo centrale con backup.** Un repo git bare sul server: il PC fa push e pull lì, e il server lo copia su GitHub a ogni push (`setup-server.sh`).
-2. **Bot Telegram con Claude Code.** Dal telefono mandi un'istruzione ("riassumi le note di ieri in una nota di sintesi") e Claude Code, in modalità headless dentro un container Docker, la esegue su un clone del vault, poi fa commit e push. Messaggi inoltrati, foto e documenti invece vengono salvati così come sono in `inbox/`, senza passare da Claude.
+1. **Repo centrale con backup.** Un repo git bare (vault centrale) sul server: il mio PC fa push e pull lì, e il server lo copia su GitHub a ogni push (`setup-server.sh`).
+2. **Bot Telegram con Claude Code.** Dal telefono mando un'istruzione ("riassumi le note di ieri in una nota di sintesi") e Claude Code, in modalità headless dentro un container Docker, la esegue su un clone del vault, poi fa commit e push. Messaggi inoltrati, foto e documenti invece vengono salvati così come sono in `inbox/`, senza passare da Claude.
 
 ![Architettura: telefono → Telegram → container sul mini PC → brain.git → GitHub; il PC lavora con brain.git via VPN](docs/architettura.png)
 
-Il bot è pensato per **una sola persona**: risponde a un solo user id Telegram, nelle chat private, e ignora tutti gli altri.
+Il bot per Telegram è pensato per **una sola persona**: risponde a un solo user id Telegram, nella chat privata e ignora tutti gli altri.
 
 ## Requisiti
 
-- Un server Ubuntu/Debian sempre acceso (va bene un mini PC), con un utente amministratore con **uid 1000**: il container lavora con quell'uid sui file di `brain/` e `state/`.
-- Un vault in un repo GitHub **privato**, per il mirror.
-- Nel vault, uno script `.githooks/pre-commit` (per esempio uno che lancia `gitleaks git --pre-commit --staged`): il container lo esegue a ogni commit e senza quel file i commit falliscono. Un `CLAUDE.md` nel vault, con le regole delle note, è consigliato.
-- Un bot Telegram nuovo, creato con @BotFather, e il tuo user id numerico.
-- Un abbonamento Claude (token creato con `claude setup-token`) oppure una chiave API Anthropic.
+**Server**
+- Ubuntu o Debian, sempre acceso (va bene un mini PC), con `sudo`. Docker lo installa `setup-host.sh`.
+- Il tuo utente deve avere **uid 1000** (`id -u`). Il container gira con quell'uid, così i file che scrive in `brain/` e `state/` restano tuoi e puoi leggerli e modificarli senza `sudo`.
+
+**PC**
+- Il vault in un clone git, con una chiave SSH. La parte pubblica va passata a `setup-server.sh` e dà al PC l'accesso a `brain.git`.
+- Il server raggiungibile via SSH: in rete locale, oppure da fuori con una VPN.
+
+**Vault**
+- Un repo GitHub **privato** (di default `brain`) che riceve la copia di backup. All'inizio può essere vuoto.
+- Uno script `.githooks/pre-commit`, versionato nel vault. Il container lo esegue prima di ogni commit del bot e, se manca, **tutti i commit del bot falliscono**. Di solito lancia gitleaks per bloccare password e token (`gitleaks git --pre-commit --staged`); gitleaks è già nell'immagine. Vale solo per i commit del bot: sul PC l'hook gira solo se lo attivi tu (`git config core.hooksPath .githooks`, più gitleaks installato).
+- Consigliato: un `CLAUDE.md` alla radice del vault, con le regole delle note. Claude lo legge a ogni task.
+
+**Account**
+- Un bot Telegram **nuovo**, creato con @BotFather (ti dà il token), e il tuo user id numerico (te lo dice @userinfobot). Il bot risponde solo a quell'id.
+- Un abbonamento Claude (il token si crea con `claude setup-token`, passo 6 dell'installazione) oppure una chiave API Anthropic, a consumo.
 
 ## Installazione
 
