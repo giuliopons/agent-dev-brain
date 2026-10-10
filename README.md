@@ -5,12 +5,7 @@ Un server casalingo per un "secondo cervello" in Markdown, cioè un vault Obsidi
 1. **Repo centrale con backup.** Un repo git bare sul server: il PC fa push e pull lì, e il server lo copia su GitHub a ogni push (`setup-server.sh`).
 2. **Bot Telegram con Claude Code.** Dal telefono mandi un'istruzione ("riassumi le note di ieri in una nota di sintesi") e Claude Code, in modalità headless dentro un container Docker, la esegue su un clone del vault, poi fa commit e push. Messaggi inoltrati, foto e documenti invece vengono salvati così come sono in `inbox/`, senza passare da Claude.
 
-```
-💻 PC ◄── push/pull ──► brain.git (sul server) ──mirror──► GitHub (privato)
-                            ▲
-📱 Telegram ─► bot.py (container) ─► claude -p ─► ./brain ─commit+push (ssh brain@127.0.0.1)
-                  └─► cattura grezza in inbox/ (./state/capture) ─push─┘
-```
+![Architettura: telefono → Telegram → container sul mini PC → brain.git → GitHub; il PC lavora con brain.git via VPN](docs/architettura.png)
 
 Il bot è pensato per **una sola persona**: risponde a un solo user id Telegram, nelle chat private, e ignora tutti gli altri.
 
