@@ -8,7 +8,7 @@ Per questo ora il mio flusso di lavoro prevede che quando provo qualcosa o noto 
 
 Questo mi permette di fissare alcuni concetti, perché ora come ora non è più importante la sintassi di un linguaggio ma la comprensione del processo, delle regole, del contesto e delle decisioni prese.
 
-Rispetto ad altri second brain agentici l'intenzione è diversa, sono io che devo impare, non l'agente.
+Rispetto ad altri second brain agentici l'intenzione è diversa, sono io che devo imparare, non l'agente.
 
 Il mio vault ha questa organizzazione ma potete pensarlo come più si confà al vostro "primo cervello".
 
@@ -42,7 +42,7 @@ Il bot per Telegram è pensato per **una sola persona**: risponde a un solo user
 
 ## Telegram
 
-Il bot Telegram riceve i messaggi che poossono essere di questo tipo:
+Il bot Telegram riceve i messaggi che possono essere di questo tipo:
 
 - **un messaggio di testo** è un task per Claude: risponde con l'esito e l'hash del commit eventuale (gli puoi scrivere "segna in una nota che ho conosciuto Mario Rossi che si occupa di AI e mi ha suggerito di leggere...");
 - **messaggi inoltrati, foto, documenti e video** vengono salvati grezzi in `inbox/`, con gli allegati in `inbox/attachments/` e un album in una sola nota. Arrivano subito, anche mentre Claude sta lavorando;
