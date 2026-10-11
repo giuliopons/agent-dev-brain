@@ -1,20 +1,14 @@
 # agent-dev-brain
 
-Un server casalingo per un "secondo cervello" in Markdown, cioè un vault Obsidian versionato con git. Questo sistema fa due cose:
-
-1. **Repo centrale con backup.** Un repo git bare ("vault" centrale, con i contenuti del tuo "secondo cervello") sul server: il tuo PC fa push e pull lì, e, se vuoi, il server lo copia su GitHub a ogni push per tenere un backup.
-2. **Bot Telegram con Claude Code.** Dal telefono mando un'istruzione ("riassumi le note di ieri in una nota di sintesi") e Claude Code, in modalità headless dentro un container Docker, la esegue su un clone del vault, poi fa commit e push. Messaggi inoltrati, foto e documenti invece vengono salvati così come sono in `inbox/`, senza passare da Claude.
-
-![Architettura: telefono → Telegram → container sul mini PC → brain.git → GitHub; il PC lavora con brain.git via VPN](docs/architettura.png)
-
-Il bot per Telegram è pensato per **una sola persona**: risponde a un solo user id Telegram, nella chat privata e ignora tutti gli altri.
-
 ## Scopo del progetto e utilizzo 
 
-Lo scopo di questo "second brain" è imparare realmente cose, tenere traccia delle cose che sperimento, delle tecnologie, degli esempi, delle persone che incontro. Infatti con l'uso di Claude Code, ChatGPT e altri strumenti AI si finisce per avere costruito cose, ma senza aver imparato nulla.
+Lo scopo di questo "second brain" è imparare realmente cose, tenere traccia delle cose che sperimento, delle tecnologie, degli esempi, delle persone che incontro in un mondo dove la tecnologia corre sempre di più. Con l'uso di Claude Code, ChatGPT e altri strumenti AI si finisce per avere fatto cose, ma senza aver imparato nulla. Sai rifarle da solo? No. Che decisioni hai preso? Boh. Se da un lato miglioriamo i risultati, dall'altro stiamo perdendo controllo.
 
-Il mio flusso di lavoro, quindi, prevede che quando imparo qualcosa o noto qualcosa che mi interessa memorizzare, me lo appunto velocemente su delle note che invio via telegram al bot, poi un giorno alla settimana le rileggo, le approfondisco e le scrivo io a mano nel "second brain" spostandole nelle cartelle specifiche.
+Per questo ora il mio flusso di lavoro prevede che quando provo qualcosa o noto qualcosa che mi interessa memorizzare, me lo appunto velocemente su delle note che invio via Telegram ad un mio bot, poi un giorno alla settimana rileggo le note, le approfondisco e le riscrivo io a mano nel "second brain" (un "vault" di file MarkDown organizzati e versionato con .git) spostandole nelle cartelle specifiche.
+
 Questo mi permette di fissare alcuni concetti, perché ora come ora non è più importante la sintassi di un linguaggio ma la comprensione del processo, delle regole, del contesto e delle decisioni prese.
+
+Rispetto ad altri second brain agentici l'intenzione è diversa, sono io che devo impare, non l'agente.
 
 Il mio vault ha questa organizzazione ma potete pensarlo come più si confà al vostro "primo cervello".
 
@@ -31,6 +25,21 @@ brain/
     └── pre-commit   # gitleaks: blocca i commit con password e token
 ```
 
+Un vault così strutturato può essere visionato ed esplorato con tool specifici come Obsidian che aiutano a mantenerlo leggibile, interconnesso e facilmente esplorabile.
+
+
+## Il sistema
+
+Questo sistema, nel mio caso, è installato su un MiniPC, un server casalingo e fa tre cose:
+
+1. **Repository centrale del vault.** Un repo git bare con i contenuti del "secondo cervello": dal mio PC posso fare push e pull lì, e, se si vuole si può connettere una repository remota privata su GitHub.
+2. **Bot Telegram per memorizzare cose grezze.** Dal telefono posso inviare brevi note, foto, link, vengono salvati in /inbox
+3. **Bot Telegram con Claude Code.** Dal telefono posso fare domande in linguaggio naturale per estrarre informazioni dal second brain.
+
+![Architettura: telefono → Telegram → container sul mini PC → brain.git → GitHub; il PC lavora con brain.git via VPN](docs/architettura.png)
+
+Il bot per Telegram è pensato per **una sola persona**: risponde a un solo user id Telegram, nella chat privata e ignora tutti gli altri.
+
 ## Telegram
 
 Il bot Telegram riceve i messaggi che poossono essere di questo tipo:
@@ -40,7 +49,7 @@ Il bot Telegram riceve i messaggi che poossono essere di questo tipo:
 - **`/in <testo>`** salva un testo parola per parola;
 - **comandi:** `/new` (nuova conversazione), `/undo` (annulla l'ultimo task di Claude; si può ripetere. Le catture non si annullano: se dopo il task ci sono catture o commit dal PC, chiede conferma con `/undo_si`), `/status`, `/log`.
 
-I vocali non sono supportati, se siete abiutati a parlare usate la trascrizione.
+I vocali non sono supportati, se siete abituati a parlare usate la trascrizione.
 
 
 ## Requisiti
