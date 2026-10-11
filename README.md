@@ -44,7 +44,7 @@ Il bot per Telegram è pensato per **una sola persona**: risponde a un solo user
 
 Il bot Telegram riceve i messaggi che possono essere di questo tipo:
 
-- **un messaggio di testo** è un task per Claude: risponde con l'esito e l'hash del commit eventuale (gli puoi scrivere "segna in una nota che ho conosciuto Mario Rossi che si occupa di AI e mi ha suggerito di leggere...");
+- **un messaggio di testo** è un task per Claude: risponde con l'esito e l'hash del commit eventuale (gli puoi scrivere "segna in inbox che ho conosciuto Mario Rossi che si occupa di AI e mi ha suggerito di leggere...", ma anche "cerca Mario Rossi");
 - **messaggi inoltrati, foto, documenti e video** vengono salvati grezzi in `inbox/`, con gli allegati in `inbox/attachments/` e un album in una sola nota. Arrivano subito, anche mentre Claude sta lavorando;
 - **`/in <testo>`** salva un testo parola per parola;
 - **comandi:** `/new` (nuova conversazione), `/undo` (annulla l'ultimo task di Claude; si può ripetere. Le catture non si annullano: se dopo il task ci sono catture o commit dal PC, chiede conferma con `/undo_si`), `/status`, `/log`.
