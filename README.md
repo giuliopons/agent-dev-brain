@@ -33,10 +33,11 @@ L'installer fa le domande una alla volta: token Telegram, user id, fuso orario, 
 2. se hai indicato GitHub, ti mostra una deploy key da aggiungere al repo (Settings → Deploy keys, con "Allow write access") e aspetta che funzioni;
 3. installa Docker e crea la chiave SSH del bot, valida solo per git e solo dal server stesso;
 4. riempie il vault: lo importa da GitHub se c'è, altrimenti crea un **vault vuoto** da `template/`, con le cartelle PARA (`inbox/`, `projects/`, `areas/`, `resources/`, `archive/`), un `CLAUDE.md` con le regole delle note e l'hook gitleaks;
-5. costruisce l'immagine e ti fa scegliere l'accesso a Claude: per l'abbonamento lancia `claude setup-token` (apri il link, accedi, incolla il codice e poi il token che stampa);
-6. avvia il bot e stampa i comandi per il PC.
+5. scrive `.env` (600) con le risposte e con il tuo uid/gid: il container gira con il tuo utente, così i file in `brain/` e `state/` restano tuoi;
+6. costruisce l'immagine e ti fa scegliere l'accesso a Claude: abbonamento (lancia `claude setup-token`: apri il link, accedi, incolla il codice e poi il token che stampa) oppure chiave API. Se hai sbagliato scelta, esci da `setup-token` con Esc o Ctrl+C e premi Invio a vuoto: torni alla scelta;
+7. avvia il bot e stampa i comandi per il PC.
 
-Si può rilanciare quando vuoi: salta quello che è già fatto e ripropone le domande facoltative rimaste senza risposta. Per autorizzare un altro PC:
+Si può rilanciare quando vuoi: salta quello che è già fatto (i valori già in `.env`, il repo, le chiavi, il clone) e ripropone solo le domande facoltative rimaste senza risposta. Così si aggiunge il backup su GitHub in un secondo momento. Per autorizzare un altro PC:
 
 ```bash
 sudo bash install.sh --pc-key "$(cat chiave_del_pc.pub)"
@@ -48,6 +49,8 @@ sudo bash install.sh --pc-key "$(cat chiave_del_pc.pub)"
 git clone brain@<server>:brain.git
 git -C brain config core.hooksPath .githooks   # controllo dei segreti anche sul PC (serve gitleaks)
 ```
+
+Se la chiave del PC non è quella di default (`~/.ssh/id_ed25519`), indicala nel clone, senza toccare `~/.ssh/config`: `git clone -c core.sshCommand="ssh -i <chiave> -o IdentitiesOnly=yes" brain@<server>:brain.git`.
 
 Da qui in avanti il PC lavora con il server, non con GitHub: GitHub è solo una copia. Se fai push su GitHub direttamente dal PC, le due storie si separano e il mirror smette di funzionare.
 
@@ -123,11 +126,12 @@ python3 -m venv /tmp/ptb && /tmp/ptb/bin/pip install -q python-telegram-bot==22.
 ## Se qualcosa va storto
 
 - **Il bot non risponde** → `sudo docker compose ps` e `logs`. Token revocato? `.env` salvato?
-- **"Claude è uscito con errore"** → token scaduto (dura circa un anno): `sudo docker compose run --rm agent-dev-brain claude setup-token`, nuovo valore in `.env`, `sudo docker compose up -d`. Se l'errore parla di sessione: `/new`.
+- **"Claude è uscito con errore"** → token scaduto (dura circa un anno): svuota `CLAUDE_CODE_OAUTH_TOKEN=` in `.env` e rilancia `sudo bash install.sh`, che ripropone la scelta dell'accesso a Claude. Lo stesso vale per passare dall'abbonamento alla chiave API, o viceversa. Se l'errore parla di sessione: `/new`.
 - **Task fallito o commit rifiutato da gitleaks** → le modifiche sono in `git stash` del clone: `git -C brain stash list`, `stash show -p`, poi `stash drop` (o `pop` per recuperarle).
 - **pull --rebase fallito** → conflitto con un commit fatto altrove. Il bot si ferma senza toccare niente: risolvi a mano in `brain/`. Per usare git dall'host: `GIT_SSH_COMMAND="ssh -i state/ssh/id_ed25519 -o UserKnownHostsFile=state/ssh/known_hosts -o IdentitiesOnly=yes"`.
 - **Cattura "❌ Non salvato"** → l'errore è nel messaggio. Se il commit è stato rifiutato da gitleaks, la nota è in `git -C state/capture stash list`. Un push fallito resta committato nel clone di cattura e riparte con la cattura successiva.
 - **`ERRORE push GitHub` in `mirror.log`** → deploy key mancante o senza permesso di scrittura, oppure qualcuno ha fatto push su GitHub direttamente. Per riprovare a mano: `sudo -u brain -H /home/brain/bin/mirror.sh`.
+- **Deploy key compromessa o persa** → cancellala su GitHub, poi `sudo rm /home/brain/.ssh/github_deploy*` e `sudo -u brain ssh-keygen -q -t ed25519 -N "" -f /home/brain/.ssh/github_deploy`, e aggiungi su GitHub la nuova `github_deploy.pub` con "Allow write access". Rilanciare `install.sh` non basta: con GitHub già configurato salta la deploy key.
 - **Chiave del bot compromessa** → togli la sua riga da `/home/brain/.ssh/authorized_keys`, cancella `state/ssh/id_ed25519*` e rilancia `sudo bash install.sh`, che ne crea una nuova.
 - **Token Telegram compromesso** → @BotFather `/revoke`, nuovo token in `.env`, `sudo docker compose up -d`.
 
