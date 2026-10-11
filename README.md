@@ -88,13 +88,15 @@ L'installer fa le domande una alla volta: token Telegram, user id, fuso orario, 
 
 Si può rilanciare quando vuoi: salta quello che è già fatto (i valori già in `.env`, il repo, le chiavi, il clone) e ripropone solo le domande facoltative rimaste senza risposta. Così si aggiunge il backup su GitHub in un secondo momento. 
 
-Per autorizzare un altro PC, copia la sua chiave pubblica SSH (sul PC: il contenuto di `~/.ssh/id_ed25519.pub`, una riga che inizia con `ssh-ed25519`) e incollala tra virgolette, sul server:
+Se durante l'installazione hai saltato la chiave del PC, puoi autorizzarlo dopo: copia la sua chiave pubblica SSH (sul PC: il contenuto di `~/.ssh/id_ed25519.pub`, una riga che inizia con `ssh-ed25519`) e incollala tra virgolette, sul server:
 
 ```bash
 sudo bash install.sh --pc-key "ssh-ed25519 AAAA… utente@pc"
 ```
 
 **Dal PC installare un clone del vault**, con la chiave autorizzata:
+
+Avere anche il vault sul proprio PC è molto utile e comodo per la fase di verifica ed editing delle note per memorizzare i concetti, anche se opzionale, consiglio vivamente di farlo.
 
 ```bash
 git clone brain@<server>:brain.git
@@ -103,7 +105,7 @@ git -C brain config core.hooksPath .githooks   # controllo dei segreti anche sul
 
 Se la chiave del PC non è quella di default (`~/.ssh/id_ed25519`), indicala nel clone, senza toccare `~/.ssh/config`: `git clone -c core.sshCommand="ssh -i <chiave> -o IdentitiesOnly=yes" brain@<server>:brain.git`.
 
-Da qui in avanti il PC lavora con il server, non con GitHub: GitHub è solo una copia. Se fai push su GitHub direttamente dal PC, le due storie si separano e il mirror smette di funzionare.
+Il PC fa push e pull **solo con il server** (nel mio caso il MiniPC): è il server che copia ogni modifica su GitHub. Non fare mai push su GitHub direttamente dal PC: GitHub avrebbe un commit che il server non conosce, il server smetterebbe di riuscire a copiarci sopra e il backup non si aggiornerebbe più. Con il clone fatto come sopra, GitHub non è tra i remote del PC e l'errore non può capitare.
 
 **Hai già un vault?** Mettilo in un repo GitHub privato prima dell'installazione e indica quel repo: l'installer lo importa. Lo stesso vale per **rifare il server da zero**, per esempio dopo la rottura del disco: stesso comando, stesso repo GitHub, e il vault torna com'era (`.env` e `state/` vengono ricreati).
 
