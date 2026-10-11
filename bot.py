@@ -68,6 +68,7 @@ lock = asyncio.Lock()
 # nei suoi commit (quindi /undo non la tocca). I messaggi aspettano in coda.
 capture_lock = asyncio.Lock()
 album_notes = {}                           # media_group_id -> nota già creata
+pending_undo = None                        # hash del task che /undo_si può annullare
 
 
 # --- Funzioni di supporto -------------------------------------------------
@@ -138,21 +139,28 @@ async def last_task_to_undo():
     (così un secondo /undo annulla il task precedente, non l'annullamento)
     e i task già annullati: git revert scrive "This reverts commit <hash>"
     nel messaggio, e da lì si capisce quali sono.
-    Restituisce (hash, "abc1234 agent: …") oppure None.
+    Restituisce (hash, "abc1234 agent: …", data, altri) oppure None. "altri" sono gli oggetti
+    dei commit più recenti del task che non sono task né annullamenti (catture, commit dal PC):
+    se ce ne sono, /undo chiede conferma prima di annullare.
     """
-    # un commit per record: hash, autore, oggetto, corpo separati da \x1f; record separati da \x1e
-    out = (await git("log", "-30", "--format=%H%x1f%an%x1f%s%x1f%b%x1e")).stdout
+    # un commit per record: hash, autore, data, oggetto, corpo separati da \x1f; record separati da \x1e
+    out = (await git("log", "-30", "--date=format:%d/%m %H:%M",
+                     "--format=%H%x1f%an%x1f%ad%x1f%s%x1f%b%x1e")).stdout
     commits = [c.strip("\n").split("\x1f") for c in out.split("\x1e") if c.strip()]
     already_reverted = {
         line.split()[-1].rstrip(".")
-        for _, _, _, body in commits
+        for *_, body in commits
         for line in body.splitlines()
         if line.startswith("This reverts commit ")
     }
-    for commit_hash, author, subject, _ in commits:   # dal più recente
+    others = []
+    for commit_hash, author, date, subject, _ in commits:   # dal più recente
+        is_task = author == "agent-dev" and subject.startswith(("agent: ", 'Revert "agent: '))
         if (author == "agent-dev" and subject.startswith("agent: ")
                 and commit_hash not in already_reverted):
-            return commit_hash, f"{commit_hash[:7]} {subject}"
+            return commit_hash, f"{commit_hash[:7]} {subject}", date, others
+        if not is_task:
+            others.append(subject)
     return None
 
 
@@ -509,6 +517,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "/in testo – salva il testo in inbox/ parola per parola\n"
                 "/new – nuova conversazione con Claude\n"
                 "/undo – annulla l'ultimo task di agent-dev (git revert; ripetibile)\n"
+                "/undo_si – conferma, se dopo il task ci sono catture o commit dal PC\n"
                 "/status – sessione, ultimo commit, occupato sì/no\n"
                 "/log – ultimi task")
 
@@ -519,6 +528,17 @@ async def cmd_new(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def cmd_undo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await undo(update, confirmed=False)
+
+
+async def cmd_undo_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await undo(update, confirmed=True)
+
+
+async def undo(update, confirmed):
+    """git revert dell'ultimo task. Se dopo il task ci sono catture o commit dal PC,
+    il task non è l'ultima cosa successa: prima di annullarlo chiede conferma (/undo_si)."""
+    global pending_undo
     if lock.locked():
         await reply(update, "⏳ Occupato, riprova tra poco.")
         return
@@ -531,7 +551,22 @@ async def cmd_undo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if target is None:
             await reply(update, "🚫 Nessun task di agent-dev da annullare negli ultimi 30 commit.")
             return
-        commit_hash, description = target
+        commit_hash, description, date, others = target
+        if confirmed and pending_undo != commit_hash:
+            # niente da confermare, o nel frattempo è cambiato il task da annullare
+            pending_undo = None
+            await reply(update, "🚫 Niente da confermare: rilancia /undo.")
+            return
+        if others and not confirmed:
+            pending_undo = commit_hash
+            shown = "\n".join(f"• {s}" for s in others[:3]) + ("\n• …" if len(others) > 3 else "")
+            await reply(update,
+                        f"⚠️ L'ultimo task è del {date}: {description}\n\n"
+                        f"Dopo ci sono {len(others)} commit che non sono task di Claude "
+                        f"e restano come sono:\n{shown}\n\n"
+                        "Per annullare comunque il task: /undo_si")
+            return
+        pending_undo = None
         r = await git("revert", "--no-edit", commit_hash)
         if r.returncode != 0:
             await git("revert", "--abort")
@@ -578,6 +613,7 @@ def main():
     app.add_handler(CommandHandler(["start", "help"], cmd_start))
     app.add_handler(CommandHandler("new", cmd_new))
     app.add_handler(CommandHandler("undo", cmd_undo))
+    app.add_handler(CommandHandler("undo_si", cmd_undo_confirm))
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(CommandHandler("log", cmd_log))
     app.add_handler(CommandHandler("in", cmd_capture))

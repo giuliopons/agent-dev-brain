@@ -59,7 +59,7 @@ Da Telegram:
 - **un messaggio di testo** è un task per Claude: risponde con l'esito e l'hash del commit;
 - **messaggi inoltrati, foto, documenti e video** vengono salvati grezzi in `inbox/`, con gli allegati in `inbox/attachments/` e un album in una sola nota. Arrivano subito, anche mentre Claude sta lavorando;
 - **`/in <testo>`** salva un testo parola per parola;
-- **comandi:** `/new` (nuova conversazione), `/undo` (annulla l'ultimo task; si può ripetere), `/status`, `/log`.
+- **comandi:** `/new` (nuova conversazione), `/undo` (annulla l'ultimo task di Claude; si può ripetere. Le catture non si annullano: se dopo il task ci sono catture o commit dal PC, chiede conferma con `/undo_si`), `/status`, `/log`.
 
 I vocali non sono supportati.
 
@@ -110,13 +110,14 @@ Un bot che fa scrivere un'IA su un repo partendo da messaggi Telegram va install
 | `state/session.json` | sessione Claude corrente (`/new` la cancella) |
 | `state/claude/` | config e sessioni di Claude Code (`~/.claude` del container) |
 | `state/ssh/` | chiave del bot, known_hosts, config (montata read-only) |
-| `tests/test_capture.py` | test end-to-end della cattura, con repo temporanei |
+| `tests/test_capture.py`, `tests/test_undo.py` | test end-to-end di cattura e `/undo`, con repo temporanei |
 
 ## Test
 
 ```bash
 python3 -m venv /tmp/ptb && /tmp/ptb/bin/pip install -q python-telegram-bot==22.8
 /tmp/ptb/bin/python tests/test_capture.py
+/tmp/ptb/bin/python tests/test_undo.py
 ```
 
 ## Se qualcosa va storto
