@@ -1,0 +1,16 @@
+#!/bin/sh
+# Blocca il commit se gitleaks trova segreti nei file in stage.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "⚠️  gitleaks non installato: controllo segreti SALTATO." >&2
+  exit 0
+fi
+if gitleaks git --help >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --redact --no-banner
+else
+  gitleaks protect --staged --redact --no-banner   # versioni < 8.19
+fi
+status=$?
+if [ $status -ne 0 ]; then
+  echo "❌ Possibile segreto nel commit. Toglilo (o, se è un falso positivo: git commit --no-verify)." >&2
+fi
+exit $status

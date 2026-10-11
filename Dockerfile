@@ -2,6 +2,10 @@
 # Aggiornare Claude Code: sudo docker compose build --no-cache && sudo docker compose up -d
 FROM node:22-bookworm-slim
 
+# uid/gid dell'utente dell'host che possiede brain/ e state/ (install.sh li scrive in .env)
+ARG AGENT_UID=1000
+ARG AGENT_GID=1000
+
 ARG GITLEAKS_VERSION=8.30.1
 ARG GITLEAKS_SHA256=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
 ARG PTB_VERSION=22.8
@@ -24,13 +28,18 @@ RUN npm install -g @anthropic-ai/claude-code && npm cache clean --force
 RUN python3 -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir "python-telegram-bot==${PTB_VERSION}"
 
-# l'immagine node ha già l'utente "node" con uid 1000: lo rinomino in "agent" (= l'utente dell'host, che deve avere uid 1000)
-RUN usermod -l agent -d /home/agent -m node && groupmod -n agent node
+# l'immagine node ha già l'utente "node" (uid 1000): lo rinomino in "agent" e gli do l'uid dell'utente dell'host
+RUN groupmod -n agent -g "${AGENT_GID}" node \
+ && usermod -l agent -d /home/agent -m -u "${AGENT_UID}" -g "${AGENT_GID}" node
 
-# nel vault .githooks/pre-commit non è eseguibile (viene da Windows): lo lancio con sh.
-# Il wrapper è di root, quindi l'agente non può modificarlo. Nel clone: core.hooksPath=/opt/githooks
+# Hook dei commit del bot (nei clone: core.hooksPath=/opt/githooks). Il wrapper è di root, quindi l'agente non può modificarlo.
+# Se il vault ha .githooks/pre-commit lo lancia con sh (da Windows arriva senza bit di esecuzione),
+# altrimenti fa direttamente il controllo dei segreti con gitleaks.
 RUN mkdir -p /opt/githooks \
- && printf '#!/bin/sh\nexec sh "$(git rev-parse --show-toplevel)/.githooks/pre-commit" "$@"\n' > /opt/githooks/pre-commit \
+ && printf '%s\n' '#!/bin/sh' \
+      'hook="$(git rev-parse --show-toplevel)/.githooks/pre-commit"' \
+      '[ -f "$hook" ] && exec sh "$hook" "$@"' \
+      'exec gitleaks git --pre-commit --staged --redact --no-banner' > /opt/githooks/pre-commit \
  && chmod 755 /opt/githooks/pre-commit
 
 ENV PATH=/opt/venv/bin:$PATH \

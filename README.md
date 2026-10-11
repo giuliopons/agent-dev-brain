@@ -2,7 +2,7 @@
 
 Un server casalingo per un "secondo cervello" in Markdown, cioè un vault Obsidian versionato con git. Questo sistema fa due cose:
 
-1. **Repo centrale con backup.** Un repo git bare (vault centrale) sul server: il mio PC fa push e pull lì, e il server lo copia su GitHub a ogni push (`setup-server.sh`).
+1. **Repo centrale con backup.** Un repo git bare (vault centrale) sul server: il mio PC fa push e pull lì, e, se vuoi, il server lo copia su GitHub a ogni push.
 2. **Bot Telegram con Claude Code.** Dal telefono mando un'istruzione ("riassumi le note di ieri in una nota di sintesi") e Claude Code, in modalità headless dentro un container Docker, la esegue su un clone del vault, poi fa commit e push. Messaggi inoltrati, foto e documenti invece vengono salvati così come sono in `inbox/`, senza passare da Claude.
 
 ![Architettura: telefono → Telegram → container sul mini PC → brain.git → GitHub; il PC lavora con brain.git via VPN](docs/architettura.png)
@@ -11,77 +11,47 @@ Il bot per Telegram è pensato per **una sola persona**: risponde a un solo user
 
 ## Requisiti
 
-**Server**
-- Ubuntu o Debian, sempre acceso (va bene un mini PC), con `sudo`. Docker lo installa `setup-host.sh`.
-- Il tuo utente deve avere **uid 1000** (`id -u`). Il container gira con quell'uid, così i file che scrive in `brain/` e `state/` restano tuoi e puoi leggerli e modificarli senza `sudo`.
+- Un server **Ubuntu o Debian** sempre acceso (va bene un mini PC), con un utente che può usare `sudo`. Tutto il resto, Docker compreso, lo installa l'installer.
+- Un **bot Telegram nuovo**, creato con @BotFather (ti dà il token), e il tuo **user id** numerico (te lo dice @userinfobot).
+- Un **abbonamento Claude** (Pro o Max) oppure una **chiave API** Anthropic, a consumo.
 
-**PC**
-- Il vault in un clone git, con una chiave SSH. La parte pubblica va passata a `setup-server.sh` e dà al PC l'accesso a `brain.git`.
-- Il server raggiungibile via SSH: in rete locale, oppure da fuori con una VPN.
-
-**Vault**
-- Un repo GitHub **privato** (di default `brain`) che riceve la copia di backup. All'inizio può essere vuoto.
-- Uno script `.githooks/pre-commit`, versionato nel vault. Il container lo esegue prima di ogni commit del bot e, se manca, **tutti i commit del bot falliscono**. Di solito lancia gitleaks per bloccare password e token (`gitleaks git --pre-commit --staged`); gitleaks è già nell'immagine. Vale solo per i commit del bot: sul PC l'hook gira solo se lo attivi tu (`git config core.hooksPath .githooks`, più gitleaks installato).
-- Consigliato: un `CLAUDE.md` alla radice del vault, con le regole delle note. Claude lo legge a ogni task.
-
-**Account**
-- Un bot Telegram **nuovo**, creato con @BotFather (ti dà il token), e il tuo user id numerico (te lo dice @userinfobot). Il bot risponde solo a quell'id.
-- Un abbonamento Claude (il token si crea con `claude setup-token`, passo 6 dell'installazione) oppure una chiave API Anthropic, a consumo.
+Facoltativi:
+- un **repo GitHub privato** per il backup. Se contiene già un vault viene importato, altrimenti crealo vuoto, senza README;
+- la **chiave SSH pubblica del PC** (`~/.ssh/id_ed25519.pub`), per lavorare sul vault anche dal PC. Il server deve essere raggiungibile via SSH: in rete locale, oppure da fuori con una VPN.
 
 ## Installazione
 
-Dalla cartella del repo, sul server:
+Sul server:
 
 ```bash
 git clone https://github.com/giuliopons/agent-dev-brain.git && cd agent-dev-brain
+sudo bash install.sh
+```
 
-# 1. repo centrale + mirror. Alla fine stampa una deploy key da aggiungere su GitHub
-#    (repo del vault → Settings → Deploy keys, con "Allow write access"), poi verifica:
-sudo bash setup-server.sh <utente-github> "$(cat chiave_pubblica_del_pc.pub)"
-sudo -u brain -H ssh -T git@github-brain
-#    GH_REPO=nome-repo se il repo del vault non si chiama "brain"
+L'installer fa le domande una alla volta: token Telegram, user id, fuso orario, repo GitHub e chiave del PC (queste due si possono saltare). Poi:
+1. crea l'utente `brain` e il repo centrale `/home/brain/brain.git`, che rifiuta force push e cancellazioni;
+2. se hai indicato GitHub, ti mostra una deploy key da aggiungere al repo (Settings → Deploy keys, con "Allow write access") e aspetta che funzioni;
+3. installa Docker e crea la chiave SSH del bot, valida solo per git e solo dal server stesso;
+4. riempie il vault: lo importa da GitHub se c'è, altrimenti crea un **vault vuoto** da `template/`, con le cartelle PARA (`inbox/`, `projects/`, `areas/`, `resources/`, `archive/`), un `CLAUDE.md` con le regole delle note e l'hook gitleaks;
+5. costruisce l'immagine e ti fa scegliere l'accesso a Claude: per l'abbonamento lancia `claude setup-token` (apri il link, accedi, incolla il codice e poi il token che stampa);
+6. avvia il bot e stampa i comandi per il PC.
 
-# 2. riempi brain.git, che è vuoto: dal PC, con il server come remote principale
-#    git push <remote-server> main
+Si può rilanciare quando vuoi: salta quello che è già fatto e ripropone le domande facoltative rimaste senza risposta. Per autorizzare un altro PC:
 
-# 3. chiave e ssh del bot. Le cartelle vanno create a mano:
-#    se le crea docker, finiscono a root e il container non ci scrive
-mkdir -p state/claude && install -d -m 700 state/ssh
-ssh-keygen -q -t ed25519 -N "" -C "agent-dev@$(hostname)" -f state/ssh/id_ed25519
-ssh-keyscan -t ed25519 127.0.0.1 > state/ssh/known_hosts
-cat > state/ssh/config <<'CFG'
-# ssh del container agent-dev-brain (montato read-only in /home/agent/.ssh)
-Host 127.0.0.1
-  User brain
-  IdentityFile ~/.ssh/id_ed25519
-  IdentitiesOnly yes
-  # known_hosts è read-only: non provare ad aggiungere altre chiavi dell'host
-  UpdateHostKeys no
-  StrictHostKeyChecking yes
-CFG
-chmod 600 state/ssh/config
+```bash
+sudo bash install.sh --pc-key "$(cat chiave_del_pc.pub)"
+```
 
-# 4. Docker + chiave del bot in authorized_keys di brain (solo git, solo da localhost)
-sudo bash setup-host.sh
+**Dal PC**, con la chiave autorizzata:
 
-# 5. clone del vault per il bot, con i path del container
-GIT_SSH_COMMAND="ssh -i state/ssh/id_ed25519 -o UserKnownHostsFile=state/ssh/known_hosts -o IdentitiesOnly=yes" \
-  git clone brain@127.0.0.1:brain.git brain
-git -C brain config user.name agent-dev
-git -C brain config user.email "agent-dev@$(hostname).invalid"
-git -C brain config core.hooksPath /opt/githooks
-git -C brain config core.sshCommand "ssh -i /home/agent/.ssh/id_ed25519 -o UserKnownHostsFile=/home/agent/.ssh/known_hosts -o IdentitiesOnly=yes"
-
-# 6. segreti e avvio
-cp .env.example .env && chmod 600 .env   # compila TELEGRAM_TOKEN e ALLOWED_USER_ID
-sudo docker compose build
-sudo docker compose run --rm agent-dev-brain claude setup-token   # il valore va in .env
-sudo docker compose up -d
+```bash
+git clone brain@<server>:brain.git
+git -C brain config core.hooksPath .githooks   # controllo dei segreti anche sul PC (serve gitleaks)
 ```
 
 Da qui in avanti il PC lavora con il server, non con GitHub: GitHub è solo una copia. Se fai push su GitHub direttamente dal PC, le due storie si separano e il mirror smette di funzionare.
 
-Gli stessi passi servono per rifare il server da zero, per esempio dopo la rottura del disco: GitHub ha la copia completa del vault, e `.env` e `state/` vanno ricreati.
+**Hai già un vault?** Mettilo in un repo GitHub privato prima dell'installazione e indica quel repo: l'installer lo importa. Lo stesso vale per **rifare il server da zero**, per esempio dopo la rottura del disco: stesso comando, stesso repo GitHub, e il vault torna com'era (`.env` e `state/` vengono ricreati).
 
 ## Uso
 
@@ -116,13 +86,13 @@ Un bot che fa scrivere un'IA su un repo partendo da messaggi Telegram va install
 - **Testi di terzi.** Un messaggio inoltrato non diventa mai un'istruzione per Claude: viene solo salvato.
 - **La storia del vault.** `brain.git` rifiuta force push e cancellazioni di branch: ogni modifica si annulla con `git revert` (`/undo`), e GitHub ha una copia.
 - **Accesso al repo centrale.** La chiave del bot è in `authorized_keys` con `restrict,from="127.0.0.1,::1"`: solo git (git-shell), niente tunnel, valida solo dal server stesso.
-- **Segreti nelle note.** Ogni commit passa dall'hook `pre-commit` del vault (gitleaks). Il wrapper `/opt/githooks/pre-commit` è di root, quindi l'agente non può modificarlo.
+- **Segreti nelle note.** Ogni commit del bot passa da gitleaks: tramite l'hook `.githooks/pre-commit` del vault se c'è, altrimenti direttamente. Il wrapper `/opt/githooks/pre-commit` è di root, quindi l'agente non può modificarlo (lo script del vault sì: vedi sotto).
 - **Il server.** Claude gira in un container, con un utente non root e un limite di 1 GB di memoria. `.env` resta fuori dal container, e il token Telegram viene tolto dall'ambiente passato a Claude.
 
 **Cosa NON protegge**
 - **Prompt injection rimandata.** Gli inoltri finiscono in `inbox/` senza passare da Claude, ma quando poi chiedi a Claude di sistemare l'inbox li legge, e un testo malevolo può contenere istruzioni. Lo stesso vale per le pagine web che Claude apre.
 - **Gli strumenti di Claude non sono limitati.** Claude viene lanciato con `--dangerously-skip-permissions`. Con quel flag, `--allowedTools` non restringe niente: Claude ha shell completa e accesso al web dentro il container. Il confine vero è il container, che usa `network_mode: host` (serve per arrivare a `127.0.0.1:22`) e quindi raggiunge anche i servizi in ascolto in locale sul server.
-- **I segreti nell'ambiente di Claude.** Il token di Claude è per forza nel suo ambiente. Il token Telegram ne è escluso, ma un'istruzione malevola potrebbe comunque leggerlo dal processo del bot, che gira con lo stesso utente. gitleaks ferma gli errori, non chi lo aggira con `git commit --no-verify`.
+- **I segreti nell'ambiente di Claude.** Il token di Claude è per forza nel suo ambiente. Il token Telegram ne è escluso, ma un'istruzione malevola potrebbe comunque leggerlo dal processo del bot, che gira con lo stesso utente. gitleaks ferma gli errori, non chi lo aggira con `git commit --no-verify` o modificando `.githooks/pre-commit` nel vault.
 - **Il tuo account Telegram.** Chi controlla il tuo account controlla il bot.
 
 ## File
@@ -131,9 +101,9 @@ Un bot che fa scrivere un'IA su un repo partendo da messaggi Telegram va install
 |---|---|
 | `bot.py` | il bot (montato nel container: dopo una modifica basta `restart`) |
 | `Dockerfile`, `docker-compose.yml` | immagine e servizio |
-| `setup-server.sh` | una tantum: utente `brain` (git-shell), `brain.git`, mirror su GitHub, cron orario di recupero |
-| `setup-host.sh` | una tantum: Docker, chiave del bot in `authorized_keys` di `brain` |
-| `.env` (600, non versionato) | `TELEGRAM_TOKEN`, `ALLOWED_USER_ID`, `CLAUDE_CODE_OAUTH_TOKEN`, `TZ` |
+| `install.sh` | installazione e reinstallazione: utente `brain` (git-shell), `brain.git`, mirror su GitHub con cron orario di recupero, Docker, chiave del bot, clone, `.env`, avvio |
+| `template/` | il vault vuoto creato al primo avvio, se non c'è niente da importare |
+| `.env` (600, non versionato) | `TELEGRAM_TOKEN`, `ALLOWED_USER_ID`, `CLAUDE_CODE_OAUTH_TOKEN` o `ANTHROPIC_API_KEY`, `TZ`, `AGENT_UID`/`AGENT_GID` |
 | `brain/` (non versionato) | clone del vault su cui lavora l'agente (autore `agent-dev`) |
 | `state/capture/` | secondo clone, usato solo per la cattura in `inbox/`. Così le catture non finiscono nei commit dei task e `/undo` non le annulla |
 | `state/agent.log` | una riga per task: data, istruzione, esito, hash |
@@ -157,7 +127,7 @@ python3 -m venv /tmp/ptb && /tmp/ptb/bin/pip install -q python-telegram-bot==22.
 - **pull --rebase fallito** → conflitto con un commit fatto altrove. Il bot si ferma senza toccare niente: risolvi a mano in `brain/`. Per usare git dall'host: `GIT_SSH_COMMAND="ssh -i state/ssh/id_ed25519 -o UserKnownHostsFile=state/ssh/known_hosts -o IdentitiesOnly=yes"`.
 - **Cattura "❌ Non salvato"** → l'errore è nel messaggio. Se il commit è stato rifiutato da gitleaks, la nota è in `git -C state/capture stash list`. Un push fallito resta committato nel clone di cattura e riparte con la cattura successiva.
 - **`ERRORE push GitHub` in `mirror.log`** → deploy key mancante o senza permesso di scrittura, oppure qualcuno ha fatto push su GitHub direttamente. Per riprovare a mano: `sudo -u brain -H /home/brain/bin/mirror.sh`.
-- **Chiave del bot compromessa** → togli la sua riga da `/home/brain/.ssh/authorized_keys`, crea una chiave nuova con `ssh-keygen` in `state/ssh/` e rilancia `sudo bash setup-host.sh`.
+- **Chiave del bot compromessa** → togli la sua riga da `/home/brain/.ssh/authorized_keys`, cancella `state/ssh/id_ed25519*` e rilancia `sudo bash install.sh`, che ne crea una nuova.
 - **Token Telegram compromesso** → @BotFather `/revoke`, nuovo token in `.env`, `sudo docker compose up -d`.
 
 ## Licenza

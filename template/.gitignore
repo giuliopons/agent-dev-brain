@@ -1,0 +1,8 @@
+# Obsidian: stato locale della UI, cambia a ogni apertura
+.obsidian/workspace*.json
+.obsidian/cache
+.trash/
+# Sistema
+.DS_Store
+Thumbs.db
+*.swp

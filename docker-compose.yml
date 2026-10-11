@@ -3,11 +3,16 @@ name: agent-dev-brain
 
 services:
   agent-dev-brain:
-    build: .
+    build:
+      context: .
+      # uid/gid dell'utente che possiede brain/ e state/: install.sh li scrive in .env
+      args:
+        AGENT_UID: ${AGENT_UID:-1000}
+        AGENT_GID: ${AGENT_GID:-1000}
     image: agent-dev-brain:latest
     container_name: agent-dev-brain
     env_file: .env
-    user: "1000:1000"
+    user: "${AGENT_UID:-1000}:${AGENT_GID:-1000}"
     # rete dell'host: 127.0.0.1:22 è l'sshd del mini PC (from= in authorized_keys di brain)
     network_mode: host
     restart: unless-stopped
