@@ -154,10 +154,12 @@ Un bot che fa scrivere un'IA su un repo partendo da messaggi Telegram va install
 
 ## Test
 
+I test importano `bot.py`, che ha bisogno della libreria python-telegram-bot. Sul server non c'è (il bot gira nel container), quindi si installa in un ambiente virtuale temporaneo:
+
 ```bash
-python3 -m venv /tmp/ptb && /tmp/ptb/bin/pip install -q python-telegram-bot==22.8
-/tmp/ptb/bin/python tests/test_capture.py
-/tmp/ptb/bin/python tests/test_undo.py
+python3 -m venv /tmp/venv-test && /tmp/venv-test/bin/pip install -q python-telegram-bot==22.8
+/tmp/venv-test/bin/python tests/test_capture.py
+/tmp/venv-test/bin/python tests/test_undo.py
 ```
 
 ## Se qualcosa va storto
