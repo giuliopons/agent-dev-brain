@@ -2,12 +2,46 @@
 
 Un server casalingo per un "secondo cervello" in Markdown, cioè un vault Obsidian versionato con git. Questo sistema fa due cose:
 
-1. **Repo centrale con backup.** Un repo git bare (vault centrale) sul server: il mio PC fa push e pull lì, e, se vuoi, il server lo copia su GitHub a ogni push.
+1. **Repo centrale con backup.** Un repo git bare ("vault" centrale, con i contenuti del tuo "secondo cervello") sul server: il tuo PC fa push e pull lì, e, se vuoi, il server lo copia su GitHub a ogni push per tenere un backup.
 2. **Bot Telegram con Claude Code.** Dal telefono mando un'istruzione ("riassumi le note di ieri in una nota di sintesi") e Claude Code, in modalità headless dentro un container Docker, la esegue su un clone del vault, poi fa commit e push. Messaggi inoltrati, foto e documenti invece vengono salvati così come sono in `inbox/`, senza passare da Claude.
 
 ![Architettura: telefono → Telegram → container sul mini PC → brain.git → GitHub; il PC lavora con brain.git via VPN](docs/architettura.png)
 
 Il bot per Telegram è pensato per **una sola persona**: risponde a un solo user id Telegram, nella chat privata e ignora tutti gli altri.
+
+## Scopo del progetto e utilizzo 
+
+Lo scopo di questo "second brain" è imparare realmente cose, tenere traccia delle cose che sperimento, delle tecnologie, degli esempi, delle persone che incontro. Infatti con l'uso di Claude Code, ChatGPT e altri strumenti AI si finisce per avere costruito cose, ma senza aver imparato nulla.
+
+Il mio flusso di lavoro, quindi, prevede che quando imparo qualcosa o noto qualcosa che mi interessa memorizzare, me lo appunto velocemente su delle note che invio via telegram al bot, poi un giorno alla settimana le rileggo, le approfondisco e le scrivo io a mano nel "second brain" spostandole nelle cartelle specifiche.
+Questo mi permette di fissare alcuni concetti, perché ora come ora non è più importante la sintassi di un linguaggio ma la comprensione del processo, delle regole, del contesto e delle decisioni prese.
+
+Il mio vault ha questa organizzazione ma potete pensarlo come più si confà al vostro "primo cervello".
+
+```
+brain/
+├── inbox/           # cattura grezza: note da Telegram (AAAA-MM-GG-hhmmss.md) da rileggere
+│   └── attachments/ # foto e documenti allegati alle note
+├── projects/        # cose con una fine; quando si chiudono vanno in archive/
+├── areas/           # responsabilità continue, senza scadenza
+├── resources/       # quello che ho imparato, per argomento: qui scrivo io le note rielaborate
+├── archive/         # progetti chiusi, aree abbandonate
+├── CLAUDE.md        # regole delle note per Claude
+└── .githooks/
+    └── pre-commit   # gitleaks: blocca i commit con password e token
+```
+
+## Telegram
+
+Il bot Telegram riceve i messaggi che poossono essere di questo tipo:
+
+- **un messaggio di testo** è un task per Claude: risponde con l'esito e l'hash del commit eventuale (gli puoi scrivere "segna in una nota che ho conosciuto Mario Rossi che si occupa di AI e mi ha suggerito di leggere...");
+- **messaggi inoltrati, foto, documenti e video** vengono salvati grezzi in `inbox/`, con gli allegati in `inbox/attachments/` e un album in una sola nota. Arrivano subito, anche mentre Claude sta lavorando;
+- **`/in <testo>`** salva un testo parola per parola;
+- **comandi:** `/new` (nuova conversazione), `/undo` (annulla l'ultimo task di Claude; si può ripetere. Le catture non si annullano: se dopo il task ci sono catture o commit dal PC, chiede conferma con `/undo_si`), `/status`, `/log`.
+
+I vocali non sono supportati, se siete abiutati a parlare usate la trascrizione.
+
 
 ## Requisiti
 
@@ -56,15 +90,7 @@ Da qui in avanti il PC lavora con il server, non con GitHub: GitHub è solo una 
 
 **Hai già un vault?** Mettilo in un repo GitHub privato prima dell'installazione e indica quel repo: l'installer lo importa. Lo stesso vale per **rifare il server da zero**, per esempio dopo la rottura del disco: stesso comando, stesso repo GitHub, e il vault torna com'era (`.env` e `state/` vengono ricreati).
 
-## Uso
-
-Da Telegram:
-- **un messaggio di testo** è un task per Claude: risponde con l'esito e l'hash del commit;
-- **messaggi inoltrati, foto, documenti e video** vengono salvati grezzi in `inbox/`, con gli allegati in `inbox/attachments/` e un album in una sola nota. Arrivano subito, anche mentre Claude sta lavorando;
-- **`/in <testo>`** salva un testo parola per parola;
-- **comandi:** `/new` (nuova conversazione), `/undo` (annulla l'ultimo task di Claude; si può ripetere. Le catture non si annullano: se dopo il task ci sono catture o commit dal PC, chiede conferma con `/undo_si`), `/status`, `/log`.
-
-I vocali non sono supportati.
+## Note comandi docker
 
 Sul server:
 ```bash
