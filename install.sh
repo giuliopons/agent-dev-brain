@@ -315,6 +315,6 @@ echo
 echo "Dal PC (con la chiave autorizzata):"
 echo "  git clone $U@${ip:-<server>}:brain.git"
 echo "  git -C brain config core.hooksPath .githooks   # hook gitleaks, serve gitleaks installato"
-grep -qs '^no-port-forwarding' "$AK" || echo "  (nessun PC autorizzato: sudo bash install.sh --pc-key \"\$(cat chiave.pub)\")"
+grep -qs '^no-port-forwarding' "$AK" || echo "  (nessun PC autorizzato: sudo bash install.sh --pc-key \"<riga di ~/.ssh/id_ed25519.pub del PC>\")"
 echo
 echo "Docker si usa con sudo: sudo docker compose logs -f, sudo docker compose ps"

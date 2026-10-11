@@ -80,10 +80,12 @@ L'installer fa le domande una alla volta: token Telegram, user id, fuso orario, 
 6. costruisce l'immagine e ti fa scegliere l'accesso a Claude: abbonamento (lancia `claude setup-token`: apri il link, accedi, incolla il codice e poi il token che stampa) oppure chiave API. Se hai sbagliato scelta, esci da `setup-token` con Esc o Ctrl+C e premi Invio a vuoto: torni alla scelta;
 7. avvia il bot e stampa i comandi per il PC.
 
-Si può rilanciare quando vuoi: salta quello che è già fatto (i valori già in `.env`, il repo, le chiavi, il clone) e ripropone solo le domande facoltative rimaste senza risposta. Così si aggiunge il backup su GitHub in un secondo momento. Per autorizzare un altro PC:
+Si può rilanciare quando vuoi: salta quello che è già fatto (i valori già in `.env`, il repo, le chiavi, il clone) e ripropone solo le domande facoltative rimaste senza risposta. Così si aggiunge il backup su GitHub in un secondo momento. 
+
+Per autorizzare un altro PC, copia la sua chiave pubblica SSH (sul PC: il contenuto di `~/.ssh/id_ed25519.pub`, una riga che inizia con `ssh-ed25519`) e incollala tra virgolette, sul server:
 
 ```bash
-sudo bash install.sh --pc-key "$(cat chiave_del_pc.pub)"
+sudo bash install.sh --pc-key "ssh-ed25519 AAAA… utente@pc"
 ```
 
 **Dal PC**, con la chiave autorizzata:
