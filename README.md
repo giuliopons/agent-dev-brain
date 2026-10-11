@@ -18,7 +18,7 @@ brain/
 │   └── attachments/ # foto e documenti allegati alle note
 ├── projects/        # cose con una fine; quando si chiudono vanno in archive/
 ├── areas/           # responsabilità continue, senza scadenza
-├── resources/       # quello che ho imparato, per argomento: qui scrivo io le note rielaborate
+├── resources/       # quello che ho imparato, per argomento
 ├── archive/         # progetti chiusi, aree abbandonate
 ├── CLAUDE.md        # regole delle note per Claude
 └── .githooks/
@@ -50,6 +50,12 @@ Il bot Telegram riceve i messaggi che poossono essere di questo tipo:
 - **comandi:** `/new` (nuova conversazione), `/undo` (annulla l'ultimo task di Claude; si può ripetere. Le catture non si annullano: se dopo il task ci sono catture o commit dal PC, chiede conferma con `/undo_si`), `/status`, `/log`.
 
 I vocali non sono supportati, se siete abituati a parlare usate la trascrizione.
+
+## Skill
+
+Ovviamente se c'è un CLAUDE.md dentro al vault, Claude lo usa, quindi possiamo definire regole e meccanismi per migliorare l'organizzazione, tipo `/sistema-nota` che corregge la formattazione, sistema i titoli, le tag, ma non tocca il testo, oppure `/controlla-vault` che sistema link rotti ed altri errori...
+
+L'agente deve aiutarmi a tenere in ordine la memoria, non a sostituirmi.
 
 
 ## Requisiti
@@ -88,7 +94,7 @@ Per autorizzare un altro PC, copia la sua chiave pubblica SSH (sul PC: il conten
 sudo bash install.sh --pc-key "ssh-ed25519 AAAA… utente@pc"
 ```
 
-**Dal PC**, con la chiave autorizzata:
+**Dal PC installare un clone del vault**, con la chiave autorizzata:
 
 ```bash
 git clone brain@<server>:brain.git
@@ -101,7 +107,7 @@ Da qui in avanti il PC lavora con il server, non con GitHub: GitHub è solo una 
 
 **Hai già un vault?** Mettilo in un repo GitHub privato prima dell'installazione e indica quel repo: l'installer lo importa. Lo stesso vale per **rifare il server da zero**, per esempio dopo la rottura del disco: stesso comando, stesso repo GitHub, e il vault torna com'era (`.env` e `state/` vengono ricreati).
 
-## Note comandi docker
+## Note comandi docker sul server MiniPC
 
 Sul server:
 ```bash
@@ -117,7 +123,7 @@ Tutti i comandi docker vogliono `sudo`, di proposito: chi è nel gruppo `docker`
 
 **Aggiornare Claude Code:** `sudo docker compose build --no-cache && sudo docker compose up -d`. L'aggiornamento automatico dentro il container è spento (`DISABLE_AUTOUPDATER=1`).
 
-## Sicurezza: cosa protegge e cosa no
+## Appunti sulla sicurezza: cosa protegge e cosa no
 
 Un bot che fa scrivere un'IA su un repo partendo da messaggi Telegram va installato sapendo dove sono i confini.
 
@@ -135,7 +141,7 @@ Un bot che fa scrivere un'IA su un repo partendo da messaggi Telegram va install
 - **I segreti nell'ambiente di Claude.** Il token di Claude è per forza nel suo ambiente. Il token Telegram ne è escluso, ma un'istruzione malevola potrebbe comunque leggerlo dal processo del bot, che gira con lo stesso utente. gitleaks ferma gli errori, non chi lo aggira con `git commit --no-verify` o modificando `.githooks/pre-commit` nel vault.
 - **Il tuo account Telegram.** Chi controlla il tuo account controlla il bot.
 
-## File
+## File del progetto
 
 | Percorso | Cosa |
 |---|---|
@@ -162,7 +168,7 @@ python3 -m venv /tmp/venv-test && /tmp/venv-test/bin/pip install -q python-teleg
 /tmp/venv-test/bin/python tests/test_undo.py
 ```
 
-## Se qualcosa va storto
+## Appunti su problemi vari nell'uso di questo sistema
 
 - **Il bot non risponde** → `sudo docker compose ps` e `logs`. Token revocato? `.env` salvato?
 - **"Claude è uscito con errore"** → token scaduto (dura circa un anno): svuota `CLAUDE_CODE_OAUTH_TOKEN=` in `.env` e rilancia `sudo bash install.sh`, che ripropone la scelta dell'accesso a Claude. Lo stesso vale per passare dall'abbonamento alla chiave API, o viceversa. Se l'errore parla di sessione: `/new`.
