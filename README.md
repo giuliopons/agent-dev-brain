@@ -2,7 +2,7 @@
 
 ## Scopo del progetto e utilizzo 
 
-Lo scopo di questo "second brain" è imparare realmente cose, tenere traccia delle cose che sperimento, delle tecnologie, degli esempi, delle persone che incontro in un mondo dove la tecnologia corre sempre di più. Con l'uso di Claude Code, ChatGPT e altri strumenti AI si finisce per avere fatto cose, ma senza aver imparato nulla. Sai rifarle da solo? No. Che decisioni hai preso? Boh. Se da un lato miglioriamo i risultati, dall'altro stiamo perdendo controllo.
+Lo scopo di questo "second brain" è imparare realmente cose, tenere traccia delle cose che sperimento, delle tecnologie, degli esempi, delle persone che incontro in un mondo dove la tecnologia corre sempre di più. Con l'uso di Claude Code, ChatGPT e altri strumenti AI si finisce per avere fatto cose, ma senza aver imparato nulla. Sai rifarle da solo? No. Che decisioni hai preso? Boh. Se da un lato miglioriamo i risultati, dall'altro stiamo perdendo controllo e consapevolezza.
 
 Per questo ora il mio flusso di lavoro prevede che quando provo qualcosa o noto qualcosa che mi interessa memorizzare, me lo appunto velocemente su delle note che invio via Telegram ad un mio bot, poi un giorno alla settimana rileggo le note, le approfondisco e le riscrivo io a mano nel "second brain" (un "vault" di file MarkDown organizzati e versionato con .git) spostandole nelle cartelle specifiche.
 
