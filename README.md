@@ -115,7 +115,7 @@ Sul server:
 ```bash
 sudo docker compose ps                  # sta girando?
 sudo docker compose logs -f             # log del bot (Ctrl+C per uscire)
-sudo docker compose restart             # dopo aver modificato bot.py
+sudo docker compose restart             # riavvia il bot
 sudo docker compose up -d               # avvio (riparte da solo anche dopo un reboot)
 sudo docker compose exec agent-dev-brain bash # shell nel container
 sudo tail -3 /home/brain/mirror.log     # esito delle copie su GitHub
@@ -147,7 +147,7 @@ Un bot che fa scrivere un'IA su un repo partendo da messaggi Telegram va install
 
 | Percorso | Cosa |
 |---|---|
-| `bot.py` | il bot (montato nel container: dopo una modifica basta `restart`) |
+| `bot.py` | il bot |
 | `Dockerfile`, `docker-compose.yml` | immagine e servizio |
 | `install.sh` | installazione e reinstallazione: utente `brain` (git-shell), `brain.git`, mirror su GitHub con cron orario di recupero, Docker, chiave del bot, clone, `.env`, avvio |
 | `template/` | il vault vuoto creato al primo avvio, se non c'è niente da importare |
@@ -158,17 +158,6 @@ Un bot che fa scrivere un'IA su un repo partendo da messaggi Telegram va install
 | `state/session.json` | sessione Claude corrente (`/new` la cancella) |
 | `state/claude/` | config e sessioni di Claude Code (`~/.claude` del container) |
 | `state/ssh/` | chiave del bot, known_hosts, config (montata read-only) |
-| `tests/test_capture.py`, `tests/test_undo.py` | test end-to-end di cattura e `/undo`, con repo temporanei |
-
-## Test
-
-I test importano `bot.py`, che ha bisogno della libreria python-telegram-bot. Sul server non c'è (il bot gira nel container), quindi si installa in un ambiente virtuale temporaneo:
-
-```bash
-python3 -m venv /tmp/venv-test && /tmp/venv-test/bin/pip install -q python-telegram-bot==22.8
-/tmp/venv-test/bin/python tests/test_capture.py
-/tmp/venv-test/bin/python tests/test_undo.py
-```
 
 ## Appunti su problemi vari nell'uso di questo sistema
 
