@@ -8,7 +8,7 @@ Per questo ora il mio flusso di lavoro prevede che quando provo qualcosa o noto 
 
 Questo mi permette di fissare alcuni concetti, perché ora come ora non è più importante la sintassi di un linguaggio ma la comprensione del processo, delle regole, del contesto e delle decisioni prese.
 
-Rispetto ad altri second brain agentici (Karpathy) l'intenzione è diversa, sono io che devo imparare, non l'agente. Anche rispetto a modelli che devono "alleggerire" il carico informativo (Forte), l'idea è che l'umano può imparare di più.
+Rispetto ad altri second brain agentici (**Andrej Karpathy**) l'intenzione è diversa, sono io che devo imparare, non l'agente. Anche rispetto a modelli che devono "alleggerire" il carico informativo (**Tiago Forte**), l'idea è che l'umano può imparare di più.
 
 Il mio vault ha questa organizzazione ma potete pensarlo come più si confà al vostro "primo cervello".
 
