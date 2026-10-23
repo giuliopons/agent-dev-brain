@@ -4,11 +4,11 @@
 
 Lo scopo di questo "second brain" è imparare realmente cose, tenere traccia delle cose che sperimento, delle tecnologie, degli esempi, delle persone che incontro in un mondo dove la tecnologia corre sempre di più. Con l'uso di Claude Code, ChatGPT e altri strumenti AI si finisce per avere fatto cose, ma senza aver imparato nulla. Sai rifarle da solo? No. Che decisioni hai preso? Boh. Se da un lato miglioriamo i risultati, dall'altro stiamo perdendo controllo e consapevolezza.
 
-Per questo ora il mio flusso di lavoro prevede che quando provo qualcosa o noto qualcosa che mi interessa memorizzare, me lo appunto velocemente su delle note che invio via Telegram ad un mio bot, poi un giorno alla settimana rileggo le note, le approfondisco e le riscrivo io a mano nel "second brain" (un "vault" di file MarkDown organizzati e versionato con .git) spostandole nelle cartelle specifiche.
+Per questo ora il mio flusso di lavoro prevede che quando provo qualcosa o noto qualcosa che mi interessa memorizzare, me lo appunto velocemente su delle note che invio via Telegram al mio bot, poi un giorno alla settimana rileggo le note, le approfondisco e le riscrivo io a mano nel "second brain" (un "vault" di file MarkDown organizzati e versionato con .git) spostandole nelle cartelle specifiche.
 
 Questo mi permette di fissare alcuni concetti, perché ora come ora non è più importante la sintassi di un linguaggio ma la comprensione del processo, delle regole, del contesto e delle decisioni prese.
 
-Rispetto ad altri second brain agentici (**Andrej Karpathy**) l'intenzione è diversa, sono io che devo imparare, non l'agente. Anche rispetto a modelli che devono "alleggerire" il carico informativo (**Tiago Forte**), l'idea è che l'umano può imparare di più.
+Rispetto ad altri second brain agentici (**Andrej Karpathy**) l'intenzione è diversa, sono io che devo imparare, non l'agente. Anche rispetto a modelli che devono "alleggerire" il carico informativo (**Tiago Forte**), l'idea dietro il mio progetto è che l'umano può imparare di più.
 
 Il mio vault ha questa organizzazione ma potete pensarlo come più si confà al vostro "primo cervello".
 
@@ -27,6 +27,7 @@ brain/
 
 Un vault così strutturato può essere visionato ed esplorato con tool specifici come Obsidian che aiutano a mantenerlo leggibile, interconnesso e facilmente esplorabile.
 
+Tramite Telegram o tramite terminale posso anche interagire col "second brain" chiedendo a Claude, in linguaggio naturale, di estrarre informazioni, aggiustare la formattazione e sistemare i link tra le note, l'importante è che l'agente sia il mio bibliotecario, ma io devo scrivere perché la scrittura e il focus sui concetti è il mio momento di apprendimento.
 
 ## Il sistema
 
